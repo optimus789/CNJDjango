@@ -9,46 +9,70 @@ mainstore.setItem("wltaddr","0");
 
 //key = 0 to check if loggedin or not
 
+var count = 1
 
-String.prototype.replaceAll = function(str1, str2, ignore) 
-{
-    return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g,"\\$&"),(ignore?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
-} 
-some = 0
 setInterval(function(){ 
-  if(some!=0){
-    var gamevarstate =  data2["gameState"].replaceAll('"','*');
-  console.log("Testing: "+JSON.stringify(gamevarstate));
-
-  $.ajax({
-    type: "POST",  
-    url: "http://localhost:8000/setitem/",
-    data: {"gameState" : JSON.stringify(gamevarstate),
-            "wltaddr" : String(mainstore.getItem("wltaddr"))},
-    success: function(){
-      console.log("Success POST")
-    },
-    error: function(){
-      console.log("POST failed")
-    }
-    });
-
+  //var gamevarstate = data2["gameState"].replace(/"/g, "*");
+  var gamevarstate =  data2["gameState"].replace(/"/g, "@");
+  //console.log(gamevarstate);
+  //console.log("Testing: "+JSON.stringify(gamevarstate));
+  if(count==2 || count==1){
+    $.ajax({
+      type: "POST",   
+      url: "http://localhost:8000/setitem/",
+      data: {"gameState" : JSON.stringify(gamevarstate),
+              "wltaddr" : String(mainstore.getItem("wltaddr"))},
+      async:false,
+      success: function(){
+        //console.log("Success POST")
+      },
+      error: function(){
+       // console.log("POST failed")
+      }
+      });
   }
-  some = 2
+  else {
+    $.ajax({
+      type: "POST",  
+      url: "http://localhost:8000/setitem/",
+      data: {"gameState" : JSON.stringify(gamevarstate),
+              "wltaddr" : String(mainstore.getItem("wltaddr"))},
+      success: function(){
+      //  console.log("Success POST")
+      },
+      error: function(){
+       // console.log("POST failed")
+      }
+      });
+    }
+    if(count<=2){
+      count=count+1
+    }
+    
   
-}, 20000);
+  
+}, 4000);
 
 
   
 
 
-function renderList(data) {
+/*function renderList(data) {
 alert(data);
-}
+}*/
 
 
-function bestScoreSave(){
-  //code to save blockchain 
+function bestScoreSave() {
+  /*
+var wltaddr = String(mainstore.getItem("wltaddr"))
+          
+  RemixContract.setBest(wltaddr,bestScoreBlock).then(function(transaction){
+  console.log(transaction);
+  alert("Sent");
+  return transaction;
+  });
+
+  */
 }
 
 //to send to sqlite left
@@ -68,51 +92,65 @@ window.fakeStorage = {
     
   },
  
+
+  
   //best score fetching
   getItem: function (id) {
     if(String(id)=="gameState"){
-      console.log(mainstore.getItem("wltaddr"));
+     // console.log(mainstore.getItem("wltaddr"));
         $.ajax({
           type: 'GET',
           async: false,
-          url: "http://127.0.0.1:8000/getitem/",
+          url: "http://localhost:8000/getitem/",
           data: {"wltaddr" : String(mainstore.getItem("wltaddr"))},
           
           success:  function(data){
-            var gamestatevar = String(data).replaceAll('*','"');
-            console.log("getting data from server: "+gamestatevar.slice(1,-1));
-            alert("geting from the server: "+gamestatevar.slice(1,-1));
+            var gamestatevar = String(data).replace(/@/g, '"');
+            
             data2[id] = String(gamestatevar.slice(1,-1));
             
-            console.log("getting some value: "+data2[id]+" with id:"+String(id) );
+           // console.log("getting some value: "+data2[id]+" with id:"+String(id) );
    
             }
             });
 
             return data2[id]
     }
-    else{
-      console.log("getting some value: "+data2[id]+" with id:"+String(id) );
+    else if (String(id)=="bestScore") {
+        //var wltaddr = String(mainstore.getItem("wltaddr"));
+
+        var callBestScore = RemixContract.functions.getBest(portiswltaddr).then(function(result){
+        console.log("Fetching Data from Blockchain!");
+        //console.log("Calling the function blockchain");
+        console.log("Bignumber call: "+ethers.BigNumber.from(result));
+        data2[id] = String(ethers.BigNumber.from(result));
+        //console.log("Bignumber 2nd:"+ethers.BigNumber.from(result.best));
+        //console.log(result.best);
+        //console.log(result.best.value);
+        return ethers.BigNumber.from(result);
+        });
+        
+        //data2[id] = String(callBestScore);
+        return data2[id]
+      }
+
+    else {
+    
       return data2.hasOwnProperty(id) ? data2[id] : undefined;
     }
     
   },
 
   removeItem: function (id) {
+    //alert(id);
     $.ajax({
       type: 'GET',
       async: false,
-      url: "http://127.0.0.1:8000/getitem/",
+      url: "http://localhost:8000/removeitem/",
       data: {"wltaddr" : String(mainstore.getItem("wltaddr"))},
       
       success:  function(data){
-        var gamestatevar = String(data).replaceAll('*','"');
-        console.log("getting data from server: "+gamestatevar.slice(1,-1));
-        alert("geting from the server: "+gamestatevar.slice(1,-1));
-        data2[id] = String(gamestatevar.slice(1,-1));
-        
-        console.log("getting some value: "+data2[id]+" with id:"+String(id) );
-
+     //   console.log("Deleted game state");
         }
         });
     return delete data2[id];
@@ -127,11 +165,11 @@ function LocalStorageManager() {
   this.bestScoreKey     = "bestScore";
   this.gameStateKey     = "gameState";
 
-  var supported = this.localStorageSupported();
+  //var supported = this.localStorageSupported();
   this.storage = window.fakeStorage; //supported ? window.localStorage : 
 }
 
-LocalStorageManager.prototype.localStorageSupported = function () {
+/*LocalStorageManager.prototype.localStorageSupported = function () {
   var testKey = "test";
 
   try {
@@ -143,6 +181,7 @@ LocalStorageManager.prototype.localStorageSupported = function () {
     return false;
   }
 };
+*/
 
 // Best score getters/setters
 LocalStorageManager.prototype.getBestScore = function () {
@@ -156,7 +195,7 @@ LocalStorageManager.prototype.setBestScore = function (score) {
 // Game state getters/setters and clearing
 LocalStorageManager.prototype.getGameState = function () {
   var stateJSON = this.storage.getItem(this.gameStateKey);
-  alert("state: "+stateJSON);
+  //alert("state: "+stateJSON);
   return stateJSON ? JSON.parse(stateJSON) : null;
 };
 
