@@ -1,4 +1,4 @@
-
+firstgame = 0;
 function GameManager(size, InputManager, Actuator, StorageManager) {
   this.size           = size; // Size of the grid
   this.inputManager   = new InputManager;
@@ -16,14 +16,39 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
 
 // Restart the game
 GameManager.prototype.restart = function () {
-  console.log("This is the walletaddr:"+portiswltaddr);
+  //console.log("This is the walletaddr:"+portiswltaddr);
+  setscorectr(portiswltaddr);
+  async function setscorectr(portiswltaddr){
+    try{
+      var num1 = Number(data2["bestScore"]);
+      if(firstgame==0){
+        let c = await RemixContract.setBest(portiswltaddr,num1);
 
-  let tx = RemixContract.setBest(portiswltaddr,Number(data2["bestScore"])).then( function(transaction){
-  //console.log(transaction);
-  console.log("Best Scores Updated");
-  
-  return transaction;
-  });
+        var d = c.wait();
+        console.log(c);
+        firstgame=1;
+      }
+      let z = await RemixContract.getBest(portiswltaddr);
+      if (Number(z) != num1){
+        let c = await RemixContract.setBest(portiswltaddr,num1);
+
+        var d = c.wait();
+      }
+      /*if(parseInt(num1/500)==1){
+        var count;
+        $.a
+        if(count==0){
+          $ajax
+        }
+        sendMoney();
+      }*/
+    }
+    catch(err){
+     // console.log(err);
+    }
+
+  }
+
 
   
 
@@ -49,10 +74,10 @@ GameManager.prototype.isGameTerminated = function () {
 GameManager.prototype.setup = function () {
   var store = window.localStorage;
 
-  var previousState = this.storageManager.getGameState(); //we havve to work with sqlite here
+  var previousState = this.storageManager.getGameState();//we havve to work with sqlite here
   //alert("Previous state:"+String(previousState));
   // Reload the game from a previous game if present
-  if (previousState) {
+  if (previousState!=null) {
     this.grid        = new Grid(previousState.grid.size,
                                 previousState.grid.cells); // Reload grid
     this.score       = previousState.score;
