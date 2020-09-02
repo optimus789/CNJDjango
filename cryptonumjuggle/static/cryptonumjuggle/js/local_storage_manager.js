@@ -141,8 +141,6 @@ setInterval(function(){
       count=count+1
     }
     
-  
-  
 }, 4000);
 
 
