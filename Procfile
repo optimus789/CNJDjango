@@ -1,1 +1,1 @@
-web: gunicorn CNJDjango.wsgi --log-file -
+web: gunicorn CNJDjango.wsgi
